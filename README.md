@@ -1,4 +1,4 @@
-# Customer & Sales Analytics — Streamlit
+# Customer & Sales Analytics — Streamlit dashboard
 
 ## Run locally
 
@@ -7,27 +7,33 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-The `data/` folder contains the example customers, orders and returns CSV files. The sidebar also accepts replacement files. If you deploy publicly, **do not commit confidential customer data**. Remove `data/*.csv` and provide approved synthetic/public datasets instead (or change the app to load from private storage). This app requires bundled CSV files when no sidebar uploads are supplied.
+The dashboard loads `data/customers.csv`, `data/orders.csv`, and `data/returns.csv` by default. You can upload replacements in the sidebar. The application reads UTF-8 and Windows-1252 CSV files.
 
-## Deploy on Streamlit Community Cloud
+## Features
 
-1. Create a GitHub repository and add `app.py`, `requirements.txt`, and `data/` with **only public or synthetic** CSV files.
-2. Visit https://share.streamlit.io/ and sign in with GitHub.
-3. Choose **Create app**, select your repository, branch, and entrypoint `app.py`.
-4. Deploy and share the generated public URL.
-5. Push commits to GitHub to update the app.
+- Sidebar multi-select filters for **customer segments**, **customer regions**, and **product categories**, plus an order-date range. Multiple selections are supported in each filter. The active selections appear above the monthly sales chart.
+- Vertical executive metrics: total sales, total profit, distinct orders, distinct customers, and order return rate. No profit/AOV chart selector; profitability charts remain on their own tab.
+- Monthly sales trend by category without Q4 shading; monthly total sales; category sales; category profit pie (or bar when profits are negative); segment profit; category return rate; partial regional sales.
+- Data explorer with first five rows, per-column type, description, missing and unique counts, and up to 1,000 browsable records.
+- Custom chart builder: scatterplot, bar, line, histogram, box plot, with relevant variable selectors. Bar/line charts aggregate by sum, mean, median, or count.
+- CSV export of **all rows matching the current filters** from the joined Orders table; raw data exports are also available.
 
-## Other deployment options
+### Region warning
 
-- Streamlit Community Cloud: convenient GitHub-connected hosted deployment.
-- Private server or VM: install dependencies, run `streamlit run app.py --server.address 0.0.0.0 --server.port 8501`, and put HTTPS and access controls in front of the service.
-- Docker: containerize the same Python app and deploy to a container host such as Google Cloud Run or Azure Container Apps, configuring the listening port and authentication as needed.
+The Customers file has repeated Customer IDs with conflicting regions. Orders does not contain order-level region. The app safely joins only unambiguous customer-level regions and puts the others in the **Unknown / ambiguous** filter option. Selecting one or more known regions will exclude unknown records; regional charts only cover reliably assigned records. The default selection includes all regions, including Unknown / ambiguous, so it does not silently drop sales.
 
-## Methodology
+Returns are matched at the order level by Order ID; order-line sales and profit are summed from Orders. The date filter excludes invalid dates. Future-dated orders remain included if their dates fall within the selected range.
 
-- Orders are line items; Order ID is the order-level key.
-- Returns are deduplicated by Order ID; return rate is distinct returned orders / distinct orders.
-- Category return rate counts an order once for each category present in that order.
-- Customers contain repeated IDs and conflicting regional assignments. The app creates one row per customer for **unambiguous** segments and regions; ambiguous regions remain blank. The regional chart is partial and clearly labeled.
-- Invalid order dates are excluded from date-filtered charts.
-- Future-dated transactions in the uploaded data are displayed as provided.
+## Deploy as a website with Streamlit Community Cloud
+
+1. Put `app.py` and `requirements.txt` in a GitHub repository.
+2. Add only **approved public or synthetic** CSV files to `data/` if you want default data to appear automatically.
+3. Go to https://share.streamlit.io/, connect GitHub, and select the repository and `app.py` as the entry point.
+4. Click Deploy and share the Streamlit app URL.
+5. Push updated code to GitHub to deploy updates.
+
+**Privacy:** The bundled example files may contain customer information. Do not publish them to a public repository without permission. For confidential data, remove the `data/` folder from the public repo and use private, authenticated data storage or a private hosting setup. The app currently expects bundled files when no uploads are supplied.
+
+## Alternative hosting
+
+Deploy to a managed container service, private VM, or internal server with HTTPS and authentication. Start with `streamlit run app.py --server.address 0.0.0.0 --server.port 8501`, and configure your hosting provider's port and network settings.
